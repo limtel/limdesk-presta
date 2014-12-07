@@ -4,7 +4,7 @@ limdesk-presta
 Limdesk.com plugin for PrestaShop
 
 Limdesk extension for Prestashop compatible with: 1.5+. (tested on 1.6.0.9). 
-This extension integrate's Limdesk.com with your shop.
+This extension integrate's Limdesk.com with PrestaShop.
 
 
 ## Features
@@ -35,5 +35,14 @@ Module won't work if you do that.
 
 In your administration backend install the Limdesk plugin and go to the 
 module configuration page where you can insert your Limdesk Api Key.
-Limdesk Api Key can be found on [this page] after signin in to Limdesk.
-(https://cloud.limdesk.com/settings/integration/api)
+Limdesk Api Key can be found on 
+[this page](https://cloud.limdesk.com/settings/integration/api) 
+after signin in to Limdesk.
+
+
+## Usage
+To turn on/off limdesk chat go to the module configuration page in your 
+administration panel. 
+
+To export client's press proper button. It will be available after you submit 
+Limdesk Api Key.
