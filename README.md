@@ -27,10 +27,13 @@ prestashop_main_folder/modules/limdesk.
 Please, don't change "limdesk" folder name. 
 Module won't work if you do that.
 
-> ##### Warning! During installation process, script will modify your database.
-> ##### New table will be added, and one column to 
+> ###### Warning! During installation process, script will modify your database:
+> ###### - new table "order_ticket"
+> ###### - additional column to "customer" table
+
+> ###### Added items will be removed when you decide to remove module. 
 
 In your administration backend install the Limdesk plugin and go to the 
 module configuration page where you can insert your Limdesk Api Key.
-Limdesk Api Key can be found on [this page] 
+Limdesk Api Key can be found on [this page] after signin in to Limdesk.
 (https://cloud.limdesk.com/settings/integration/api)
