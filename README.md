@@ -20,16 +20,17 @@ This extension integrate's Limdesk.com with your shop.
 
 ## Installation
 
-To install module, paste "limdesk" folder into "modules" folder in your prestashop
-installation directory. So the correct path should look like this:
+To install module, paste "limdesk" folder into "modules" folder in your 
+prestashop installation directory. So the correct path should look like this:
 prestashop_main_folder/modules/limdesk.
 
-!! Please, don't change "limdesk" folder name. Module won't work if you do that. !!
+Please, don't change "limdesk" folder name. 
+Module won't work if you do that.
 
-> ### Warning! During installation process, one table will be added and one column 
-> to
+> ##### Warning! During installation process, script will modify your database.
+> ##### New table will be added, and one column to 
 
 In your administration backend install the Limdesk plugin and go to the 
 module configuration page where you can insert your Limdesk Api Key.
-Limdesk Api Key can be found on [this page] (https://cloud.limdesk.com/settings/integration/api)
-You can even [link to Google!](http://google.com)
+Limdesk Api Key can be found on [this page] 
+(https://cloud.limdesk.com/settings/integration/api)
