@@ -9,5 +9,6 @@ This extension integrate's Limdesk.com with your shop.
 
 Features:
 =========
+
 - possibility to export client's to Limdesk
 - 
