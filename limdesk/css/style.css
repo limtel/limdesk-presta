@@ -1,0 +1,101 @@
+.wrapper {
+    width: 30%;
+    margin: 0 auto;
+}
+
+.linput {
+    color: #555;
+    background-color: #FFF;
+    background-image: none;
+    text-align: center;
+    font-size: 18px;
+    width: 100%;
+    min-width: 340px;
+    padding: 10px 0px;
+    line-height: 1.33;
+    border-radius: 6px;
+    border: 1px solid #CCC;
+    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.075) inset;
+    transition: border-color 0.15s ease-in-out 0s, box-shadow 0.15s ease-in-out 0s;
+    margin-bottom: 20px;
+}
+
+.lselect {
+    color: #555;
+    background-color: #FFF;
+    background-image: none;
+    text-align: center;
+    font-size: 18px;
+    width: 100%;
+    min-width: 150px;
+    padding: 10px 16px;
+    height: 46px;
+    line-height: 1.33;
+    border-radius: 6px;
+    border: 1px solid #CCC;
+    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.075) inset;
+    transition: border-color 0.15s ease-in-out 0s, box-shadow 0.15s ease-in-out 0s;    
+    margin: 0 auto;
+    
+}
+
+.lbtn {
+    text-align: center;
+    color: #FFF;
+    background-color: #428BCA;
+    border-color: #285E8E;
+    padding: 10px 16px;
+    font-size: 18px;
+    line-height: 1.33;
+    border-radius: 6px;
+    display: inline-block;
+    font-weight: normal;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    -moz-user-select: none;
+    background-image: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.lbtn:focus, .lbtn:active, .lbtn.active {
+    background-color: #285E8E;
+}
+
+.lbtn:hover {
+    text-decoration: none;
+}
+
+.lbtn-export {
+    background-color: #FF9900;
+    border-color: #FF3300;
+}
+
+.lbtn-export:focus, .lbtn-export:active, .lbtn-export.active {
+    background-color: #993300
+}
+
+.wselect {
+    width: 50%;
+    min-width: 150px;
+    margin: 0 auto;
+}
+
+.lmargin {
+    margin-bottom: 20px;
+}
+
+.lmargin2x {
+    margin-bottom: 40px;
+}
+
+.lcenter {
+    text-align:center;
+}
+
+.llogo {
+    width: 60%;
+    margin: 10px 20%;
+}

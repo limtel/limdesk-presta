@@ -1,8 +1,7 @@
 <?php
 
-
 if (!defined('_PS_VERSION_')) {
-    exit; 
+    exit;
 }
 class Limdesk extends Module
 {
@@ -15,19 +14,20 @@ class Limdesk extends Module
         $this->version = '1.0.0';
         $this->author = 'Limdesk';
         $this->need_instance = 0;
-        $this->ps_versions_compliancy = array('min' => '1.5', 
-            'max' => _PS_VERSION_); 
+        $this->ps_versions_compliancy = array('min' => '1.5',
+            'max' => '1.7');
         $this->bootstrap = true;
- 
+
         parent::__construct();
- 
+
         $this->displayName = $this->l('Limdesk');
         $this->description = $this->l('Limdesk integration.');
- 
-        $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
- 
-        if (!Configuration::get('MYMODULE_NAME')) {      
-            $this->warning = $this->l('Brak nazwy modułu.'); 
+
+        $this->confirmUninstall =
+                $this->l('Are you sure you want to uninstall?');
+
+        if (!Configuration::get('MYMODULE_NAME')) {
+            $this->warning = $this->l('Module name missing');
         }
 
     }
@@ -37,36 +37,42 @@ class Limdesk extends Module
         Configuration::updateValue(
             'limdesk_export_status',
             'false'
-        );    
+        );
 
-        $sql= "CREATE TABLE IF NOT EXISTS `"._DB_PREFIX_."order_ticket` (`id_order` int(100), `ticket_number` int(100));";
+
+        $sql=
+                "CREATE TABLE IF NOT EXISTS `"
+                ._DB_PREFIX_."order_ticket` "
+                . "(`id_order` int(100), `ticket_number` int(100));";
+
         if (!$result=Db::getInstance()->Execute($sql)) {
-            return false; 
+            return false;
         }
 
-        $sql= "ALTER TABLE `"._DB_PREFIX_."customer` ADD COLUMN `id_limdesk` int(100)";
-     
+        $sql= "ALTER TABLE `"._DB_PREFIX_.
+                "customer` ADD COLUMN `id_limdesk` int(100)";
+
         if (!$result=Db::getInstance()->Execute($sql)) {
-            return false; 
+            return false;
         }
 
         if (Shop::isFeatureActive()) {
-            Shop::setContext(Shop::CONTEXT_ALL); 
+            Shop::setContext(Shop::CONTEXT_ALL);
         }
- 
-        if (!parent::install() 
-            || !$this->registerHook('Home') 
-            || !$this->registerHook('displayFooter') 
-            || !$this->registerHook('displayBackOfficeHeader') 
-            || !$this->registerHook('actionCustomerAccountAdd') 
-            || !$this->registerHook('ActionValidateOrder') 
-            || !$this->registerHook('actionObjectCustomerMessageAddAfter') 
-            || !$this->registerHook('actionOrderStatusPostUpdate') 
+
+        if (!parent::install()
+            || !$this->registerHook('Home')
+            || !$this->registerHook('displayFooter')
+            || !$this->registerHook('displayBackOfficeHeader')
+            || !$this->registerHook('actionCustomerAccountAdd')
+            || !$this->registerHook('ActionValidateOrder')
+            || !$this->registerHook('actionObjectCustomerMessageAddAfter')
+            || !$this->registerHook('actionOrderStatusPostUpdate')
             || !Configuration::updateValue('MYMODULE_NAME', 'limdesk')
         ) {
-            return false; 
+            return false;
         }
- 
+
         return true;
     }
 
@@ -75,12 +81,12 @@ class Limdesk extends Module
     {
         $sql= "ALTER TABLE `"._DB_PREFIX_."customer` DROP COLUMN `id_limdesk`";
         if (!$result=Db::getInstance()->Execute($sql)) {
-            return false; 
+            return false;
         }
 
         $sql= "DROP TABLE `"._DB_PREFIX_."order_ticket`";
         if (!$result=Db::getInstance()->Execute($sql)) {
-            return false; 
+            return false;
         }
 
         Db::getInstance()->delete(
@@ -96,16 +102,16 @@ class Limdesk extends Module
             _DB_PREFIX_.'configuration', "name = 'limdesk_export_status'"
         );
 
-        if (!parent::uninstall() 
+        if (!parent::uninstall()
             || !Configuration::deleteByName('MYMODULE_NAME')
         ) {
-            return false; 
+            return false;
         }
- 
+
         return true;
     }
 
-    public function pushData ($url, $data, $method) 
+    public function pushData ($url, $data, $method)
     {
         $ch  = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -123,20 +129,54 @@ class Limdesk extends Module
         curl_close($ch);
         $arr = json_decode($return_data, true);
         return $arr;
-    } 
+    }
 
+    public function prepareAddress($id) {
+       $sql = "SELECT * FROM "._DB_PREFIX_."address WHERE id_address = '$id'";
+        if ($row = Db::getInstance()->getRow($sql)) {
+            $company = $row['company'];
+            $firstname = $row['firstname'];
+            $lastname = $row['lastname'];
+            $street = $row['street'];
+            $postcode = $row['postcode'];
+            $city = $row['city'];
+            $phone = $row['phone'];
+            $phone_mobile = $row['phone_mobile'];
+        }
+        $address =
+                $company."\n"
+                .$firstname.' '.$lastname."\n"
+                .$street."\n"
+                .$postcode.' '.$city."\n"
+                .$phone;
+        return $address;
+    }
 
+    private function retriveWidgetKey($apiKey)
+    {
+        $arr = $this->pushData($this->__url.'widget?key=', $apiKey, 'get');
+        $limdesk_widget_key = $arr['hash'];
+        if ($limdesk_widget_key) {
+            Configuration::updateValue(
+                'limdesk_widget_key',
+                $limdesk_widget_key
+            );
+            return true;
+        }
+        return false;
+    }
 
-    public function getContent() 
-    {                                                                                     
-        if (Tools::isSubmit('save_form')) {
+    public function getContent()
+
+    {
+        if (Tools::isSubmit('limdesk_api_key')) {
 
             if (Tools::getValue('limdesk_api_key') != Configuration::get('limdesk_api_key')) {
                 Configuration::updateValue(
                     'limdesk_export_status',
                     'false'
-                );              
-            }             
+                );
+            }
 
             Configuration::updateValue(
                 'limdesk_api_key',
@@ -147,25 +187,23 @@ class Limdesk extends Module
                 'limdesk_widget_status',
                 Tools::getValue('limdesk_widget_status')
             );
-            $limdesk_api_key=Configuration::get('limdesk_api_key');
+
+            $limdesk_api_key = Configuration::get('limdesk_api_key');
+
             if ($limdesk_api_key) {
-                $arr = $this->pushData($this->__url.'widget?key=', $limdesk_api_key, 'get');
-                $limdesk_widget_key = $arr['hash'];
-                if ($limdesk_widget_key) {
-                    Configuration::updateValue(
-                        'limdesk_widget_key',
-                        $limdesk_widget_key
-                    );       
-                }
-            }     
-            $output = null;  
-            $output .= $this->displayConfirmation(
-                $this->l('Configuration saved.')
-            );
+                $status = $this->retriveWidgetKey($limdesk_api_key);
+            }
+
+            if ($status == false) {
+                $msg = $this->l('Wrong api key.');
+            }
+            else {            
+                $msg = $this->l('Configuration saved.');
+            }
         }
 
-        if (Tools::isSubmit('export_clients')) {
-            $sql = 'SELECT CONCAT(firstname,'."' '".',lastname)AS name, 
+        if (Tools::isSubmit('export_customers')) {
+            $sql = 'SELECT CONCAT(firstname,'."' '".',lastname)AS name,
                 email FROM '._DB_PREFIX_.'customer';
 
             $results['clients'] = Db::getInstance()->ExecuteS($sql);
@@ -174,103 +212,78 @@ class Limdesk extends Module
             $arr =  $this->pushData(
                 $this->__url.'clients/multi?key='
                 .$limdesk_api_key, $results, 'post'
-            );     
+            );
+            $msg = $this->l('Clients successfully exporterd to Limdesk');
             
             foreach ($arr['clients'] as $client) {
                 $id_limdesk = $client['id'];
                 $email = $client['email'];
-                $sql = 'UPDATE '._DB_PREFIX_."customer SET id_limdesk= 
+                $sql = 'UPDATE '._DB_PREFIX_."customer SET id_limdesk=
                     '$id_limdesk' WHERE email= '$email'";
                 if (!Db::getInstance()->execute($sql)) {
-                    $output = null;  
-                    $output .= $this->displayConfirmation($this->l('Error'));            
+                    $output = null;
+                    $output .= $this->displayConfirmation($this->l('Error'));
                     d('Error');
                 } else {
                     Configuration::updateValue(
                         'limdesk_export_status',
                         'true'
                     );
-                    $output = null;  
-                    $output .= $this->displayConfirmation(
-                        $this->l('Clients successfully exporterd to Limdesk')
-                    );     
                 }
-            } 
-
-        }         
-                                                                                                                  
-        $this->_generateForm();
-        if (isset($output)) {
-            return $output.$this->_html;
-        } else {
-            return $this->_html;
-        }
-    }
-                                                                                                
-    private function _generateForm() 
-    {
-                                                                                                
-        $limdesk_api_key=Configuration::get('limdesk_api_key');
-        $limdesk_widget_status=Configuration::get('limdesk_widget_status');
-        $limdesk_export_status=Configuration::get('limdesk_export_status');
-                                                                                       
-        $this->_html .= '<form action="'.$_SERVER['REQUEST_URI'].'" method="post">';
-        $this->_html .= '<div class="col-md-4">';  
-        $this->_html .= '<div class="row" >';
-        $this->_html .= '<label>'.$this->l('Limdesk Api Key: ').'</label>';
-        $this->_html .= '<input  class="form-control" type="text" name="limdesk_api_key" value="'. $limdesk_api_key.'" >';
-        $this->_html .= '</div>';
-    
-        if ($limdesk_api_key) {
-            $this->_html .= '<div class="row" style="margin-top: 10px;">';
-            $this->_html .= '<label>'.$this->l('Limdesk Widget Status: ').'</label>';
-            $this->_html .= '<select name="limdesk_widget_status" >';
-            if ($limdesk_widget_status == "on") {
-                $this->_html.= '<option selected value="on">On</option>';
-                $this->_html.= '<option value="off">Off</option>';
-            } else {
-                $this->_html.= '<option value="on">On</option>';
-                $this->_html.= '<option selected value="off">Off</option>';
             }
-            $this->_html .= '</select>';
-            $this->_html .= '</div>';
+
         }
-        $this->_html .= '<div class="row">';
-        $this->_html .= '<div class="pull-left">';
-        $this->_html .= '<input class="btn btn-primary" style="margin-top: 20px;" type="submit" name="save_form" ';
-        $this->_html .= 'value="'.$this->l('Save configuration').'" class="button" />';
-        $this->_html .= '</div>';
-        if ($limdesk_api_key && $limdesk_export_status=='false') {
-            $this->_html .= '<div class="pull-right">';    
-            $this->_html .= '<input class="btn btn-warning" style="margin-top: 20px;" type="submit" name="export_clients" ';
-            $this->_html .= 'value="'.$this->l('Export clients').'" class="button" />';
-            $this->_html .= '</div>';
-        }
-        $this->_html .= '</div>';
-        $this->_html .= '</div>'; 
-        $this->_html .= '</form>';
-    
+
+
+        $this->smarty->assign(
+                array (
+                    'msg' => $msg,
+                    'api_key' => Configuration::get('limdesk_api_key'),
+                    'widget_status' => Configuration::get('limdesk_widget_status'),
+                    'export_status' => Configuration::get('limdesk_export_status'),
+                    'url' => $_SERVER['REQUEST_URI'],
+                    'api_key_string' => $this->l('Api key'),
+                    'widget_on_string' => $this->l('Widget on'),
+                    'widget_off_string' => $this->l('Widget off'),
+                    'save_string' => $this->l('Save'),
+                    'export_string' => $this->l('Export customers')
+                )
+        );
+        return $this->display(__FILE__, 'views/templates/admin/configuration.tpl');
     }
 
-    public function hookDisplayBackOfficeHeader($params) 
+
+
+    public function hookDisplayBackOfficeHeader($params)
     {
-        $_controller = $this->context->controller;
-        $_controller->addJs($_controller->addJs($this->_path . 'js/limdesk.js'));
-        $_controller->addJs($_controller->addCss($this->_path . 'css/custom.js'));
+        $this->context->controller->addCSS(
+                ($this->_path) . 'css/style.css', 'all'
+        );
+
+        $this->context->controller->addCSS(
+                ($this->_path) . 'css/switch.css', 'all'
+        );
+
+        $this->context->controller->addJS(array(
+            _PS_JS_DIR_ . 'fileuploader.js',
+        ));
     }
 
-    public function hookDisplayFooter ($params) 
+    public function hookDisplayFooter ($params)
     {
         $limdesk_widget_status = Configuration::get('limdesk_widget_status');
         $limdesk_widget_key = Configuration::get('limdesk_widget_key');
         if ($limdesk_widget_status == 'on') {
         ?>
-            <div id="limdesk-widget" data-applet-url="//cloud.limdesk.com/applet?callback=?" data-hash="<?= $limdesk_widget_key ?>"></div><script type="text/javascript" src="//cloud.limdesk.com/widget/js/widget.js"></script>
+            <div id="limdesk-widget" data-applet-url="//cloud.limdesk.com/applet?callback=?" data-hash="<?= $limdesk_widget_key ?>">
+            </div>
+            <script type="text/javascript" src="//cloud.limdesk.com/widget/js/widget.js">
+            </script>
         <?php
-        }    
-    }   
+        }
+    }
 
-    public function hookActionCustomerAccountAdd($params) 
+    public function hookActionCustomerAccountAdd($params)
     {
         $limdesk_api_key = Configuration::get('limdesk_api_key');
         $customer_name = $params['newCustomer']->firstname.' '.$params['newCustomer']->lastname;
@@ -283,24 +296,79 @@ class Limdesk extends Module
             $id_limdesk = $arr['client']['id'];
             $sql = 'UPDATE '._DB_PREFIX_."customer SET id_limdesk= '$id_limdesk' WHERE email= '$customer_email'";
             if (!Db::getInstance()->execute($sql)) {
-                die('Error'); 
+                die('Error');
             }
         }
     }
 
 
+    private function updateCustomerLimdeskId($email, $limdeskId)
+    {
+        $sql = 'UPDATE '._DB_PREFIX_."customer SET id_limdesk= '$limdeskId' WHERE email= '$email'";
+        if (!Db::getInstance()->execute($sql)) {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+    
+    private function getLimdeskIdByEmail($email) 
+    {
+        $sql = "SELECT * FROM "._DB_PREFIX_."customer WHERE email = '$email'";
+        if ($row = Db::getInstance()->getRow($sql)) {
+            $id_limdesk = $row['id_limdesk'];
+            return $id_limdesk;
+        }
+        return false;           
+    }
+
+    private function retriveLimdeskIdByEmail($email) 
+    {
+        $apiKey = Configuration::get('limdesk_api_key');
+        $data = 'query='.$email.'&key='.$apiKey;
+        $customer = $this->pushData($this->__url.'clients/get_by_email?',$data, 'get');
+        return $customer['client']['id'];
+    }
+    
+    private function pushCustomer($customer)
+    {
+        $limdesk_api_key = Configuration::get('limdesk_api_key');
+        $customer_name = 
+                $customer->firstname.' '.$customer->lastname;
+
+        $data = array (
+            'name'=>  $customer_name,
+            'nippesel'=>'',
+            'phone'=>'' ,
+            'email'=>  $customer->email,
+            'adress'=>''
+        );
+
+        $arr = $this->pushData($this->__url.'clients?key='. $limdesk_api_key, $data, 'post');
+
+        if ($arr['client']['id']) {
+            $this->updateCustomerLimdeskId($customer->email, $arr['client']['id']);
+        }        
+    }
+
     public function hookActionValidateOrder($params)
     {
         $limdesk_api_key = Configuration::get('limdesk_api_key');
-        $customer_email = $params['customer'] ->email;
-
-        $sql = "SELECT * FROM "._DB_PREFIX_."customer WHERE email = '$customer_email'";
-        if ($row = Db::getInstance()->getRow($sql)) {
-            $id_limdesk = $row['id_limdesk'];
-        } else {
-            $id_limdesk = '-1';
+        $customerEmail = $params['customer'] ->email;
+        $id_limdesk = $this->getLimdeskIdByEmail($customerEmail);
+        
+        if (empty($id_limdesk)){
+            $id_limdesk = $this->retriveLimdeskIdByEmail($params['customer'] ->email);
+            if ($id_limdesk == NULL) {
+                $this->pushCustomer($params['customer']);
+            }
+            else {
+                $this->updateCustomerLimdeskId($customerEmail, $id_limdesk);
+            }
         }
 
+        $address = $this->prepareAddress($params['cart']->id_address_delivery);
         $id_order = $params['order']->id;
         $payment_type = $params['order']->payment;
         $order_number = $params['order']->reference;
@@ -311,17 +379,30 @@ class Limdesk extends Module
                 $product_name = $row['product_name'];
                 $product_quantity = $row['product_quantity'];
                 $product_price = round($row['unit_price_tax_incl'], 2);
-                $data = array ('client_id'=> $id_limdesk, 'name'=> $product_name.' / zamówienie nr: '.$order_number, 'price'=> $product_price, 'amount'=> $product_quantity);
+
+                $data = array (
+                    'client_id'=> $id_limdesk,
+                    'name'=> $product_name.' / '.$this->l('Order number').': '.$order_number,
+                    'price'=> $product_price,
+                    'amount'=> $product_quantity
+                );
 
                 $this->pushData($this->__url.'sales?key='.$limdesk_api_key, $data, 'post');
             }
         }
 
-        $content 
-            = "Numer zamówienia: ".$order_number."\n".
-            "Rodzaj płatności: ".$payment_type."\n";
-        $title = '[Prestashop] Nowe zamówienie';
-        $data = array ('title'=> $title, 'content'=> $content, 'reportedBy'=>'' , 'client_id'=> $id_limdesk);
+        $content =
+                $this->l('Order number').": ".$order_number."\n".
+                $this->l('Payment method').": ".$payment_type."\n".
+                $address;
+
+        $title = '[Prestashop] '.$this->l('New order');
+        $data = array (
+            'title'=> $title,
+            'content'=> $content,
+            'reportedBy'=>'' ,
+            'client_id'=> $id_limdesk
+        );
 
         $arr = $this->pushData($this->__url.'tickets?key='.$limdesk_api_key, $data, 'post');
 
@@ -335,7 +416,7 @@ class Limdesk extends Module
         );
     }
 
-    public function hookActionObjectCustomerMessageAddAfter($params) 
+    public function hookActionObjectCustomerMessageAddAfter($params)
     {
         $object = $params['object'];
         $cookie = $params['cookie'];
@@ -368,9 +449,9 @@ class Limdesk extends Module
                 $id_limdesk = $arr['client']['id'];
                 $sql = 'UPDATE '._DB_PREFIX_."customer SET id_limdesk= '$id_limdesk' WHERE email= '$customer_email'";
                 if (!Db::getInstance()->execute($sql)) {
-                    die('Error'); 
+                    die('Error');
                 }
-            }  
+            }
         }
 
         $message = $object->message;
@@ -385,7 +466,7 @@ class Limdesk extends Module
         $this->pushData($this->__url.'tickets?key='.$limdesk_api_key, $data, 'post');
     }
 
-    public function hookActionOrderStatusPostUpdate ($params) 
+    public function hookActionOrderStatusPostUpdate ($params)
     {
         $limdesk_api_key = Configuration::get('limdesk_api_key');
         $new_order_status = $params['newOrderStatus']->name;
@@ -394,7 +475,7 @@ class Limdesk extends Module
         if ($row = Db::getInstance()->getRow($sql)) {
             $ticket_number = $row['ticket_number'];
         }
-        if ($ticket_number) {    
+        if ($ticket_number) {
             $content = 'Status: '.$new_order_status;
             $data = array ('content'=> $content, 'type'=>'1');
 
